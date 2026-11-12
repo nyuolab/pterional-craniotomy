@@ -2815,3 +2815,155 @@ header {
     flex-basis:29px
   }
 }
+
+/* Patient Position controls (Layers & View) and the orientation gizmo (patient axes + gravity). */
+.position-controls {
+  border-top:1px solid #385345;
+  border-bottom:1px solid #385345;
+  margin:2px 0 7px;
+  padding:6px 0 7px
+}
+
+.position-heading {
+  font-size:9px;
+  letter-spacing:1px;
+  color:#a8c29e;
+  cursor:pointer
+}
+
+.floating .position-controls>.position-heading {
+  font-size:9px;
+  margin-bottom:0
+}
+
+.floating .position-controls[open]>.position-heading {
+  margin-bottom:5px
+}
+
+.pose-toggle {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  border:1px solid #466054;
+  border-radius:5px;
+  overflow:hidden;
+  margin-bottom:4px
+}
+
+.pose-toggle button {
+  font-size:10px;
+  line-height:1.3;
+  padding:4px 2px;
+  border:0;
+  background:transparent;
+  color:#a9beb3
+}
+
+.pose-toggle button+button {
+  border-left:1px solid #466054
+}
+
+.pose-toggle button[aria-pressed=true] {
+  background:#31473b;
+  color:#e4f4d6
+}
+
+.pose-slider label {
+  padding:3px 0 0
+}
+
+.pose-slider output,#openingValue {
+  font-variant-numeric:tabular-nums;
+  color:#dcebd1
+}
+
+.pose-slider input[type=range] {
+  margin:1px 0 3px
+}
+
+.pose-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  margin:4px 0 3px
+}
+
+.floating .pose-actions .twod {
+  font-size:9px;
+  line-height:1.3;
+  padding:4px 3px;
+  margin:0;
+  width:auto
+}
+
+.pose-note {
+  font-size:8px;
+  line-height:1.45;
+  color:#8fa99c;
+  padding-top:2px
+}
+
+#orientGizmo {
+  position:absolute;
+  right:14px;
+  bottom:14px;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  padding:5px 7px 6px;
+  border:1px solid #2f4541;
+  border-radius:9px;
+  background:#0f1b20c4;
+  pointer-events:none
+}
+
+#orientGizmo svg {
+  width:92px;
+  height:92px;
+  display:block;
+  overflow:visible
+}
+
+#orientGizmo text {
+  font:600 9px system-ui,-apple-system,sans-serif;
+  text-anchor:middle
+}
+
+#orientGizmo small {
+  font-size:8px;
+  line-height:1.4;
+  color:#9fb3a8;
+  text-align:center;
+  white-space:pre-line
+}
+
+/* Leave the bottom-right corner to the gizmo when the panel is open. */
+#viewport>.floating {
+  max-height:calc(100% - 178px)
+}
+
+@media(max-width:760px) {
+  #orientGizmo {
+    top:8px;
+    right:8px;
+    bottom:auto;
+    padding:3px
+  }
+  #orientGizmo svg {
+    width:60px;
+    height:60px
+  }
+  #orientGizmo small {
+    display:none
+  }
+  .mobile-model-dock .pose-toggle button {
+    min-height:32px
+  }
+}
+
+@media print {
+  #orientGizmo {
+    display:none
+  }
+}
