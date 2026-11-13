@@ -170,7 +170,12 @@
     function rotateByDrag(dx, dy, k = .008) { const len = Math.hypot(dx, dy); if (!len)
         return; viewQ = qNorm(qMul(qAxis([dy, dx, 0], len * k), viewQ)); viewChanged(); }
     function orbitByDrag(dx, dy, k = .008) { if (!dx && !dy)
-        return; const eye = mApply(qMat(viewQ), [0, 0, 1]), worldFrame = camFrame === 'world', up = worldFrame ? [0, 0, 1] : [0, 1, 0], az = worldFrame ? Math.atan2(eye[0], eye[1]) : Math.atan2(eye[0], eye[2]), el = Math.asin(Math.max(-1, Math.min(1, worldFrame ? eye[2] : eye[1]))), nextAz = az + dx * k, nextEl = Math.max(-1.52, Math.min(1.52, el - dy * k)), c = Math.cos(nextEl), nextEye = worldFrame ? [c * Math.sin(nextAz), c * Math.cos(nextAz), Math.sin(nextEl)] : [c * Math.sin(nextAz), Math.sin(nextEl), c * Math.cos(nextAz)]; viewQ = qLook(nextEye, up); viewChanged(); }
+        return; const M = qMat(viewQ), eye = [M[6], M[7], M[8]], worldFrame = camFrame === 'world', up = worldFrame ? [0, 0, 1] : [0, 1, 0], h0 = eye[0], h1 = worldFrame ? eye[1] : eye[2];
+        // qMat maps the model/world into view coordinates: its third ROW is the eye direction in that frame.
+        // The third column is a different vector and feeds a false direction back into every drag, causing jumps.
+        // At the exact pole the eye has no azimuth; retain it from the camera-right row until off the pole.
+        const az = Math.hypot(h0, h1) > 1e-5 ? Math.atan2(h0, h1) : worldFrame ? Math.atan2(M[1], -M[0]) : Math.atan2(-M[2], M[0]);
+        const el = Math.asin(Math.max(-1, Math.min(1, worldFrame ? eye[2] : eye[1]))), nextAz = az + dx * k, nextEl = Math.max(-1.52, Math.min(1.52, el - dy * k)), c = Math.cos(nextEl), nextEye = worldFrame ? [c * Math.sin(nextAz), c * Math.cos(nextAz), Math.sin(nextEl)] : [c * Math.sin(nextAz), Math.sin(nextEl), c * Math.cos(nextAz)]; viewQ = qLook(nextEye, up); viewChanged(); }
     function markInteraction() { interactionActive = true; pickDirty = false; clearTimeout(interactionTimer); interactionTimer = setTimeout(() => { interactionActive = false; render(true); }, 140); }
     // Camera glide: slerp the orientation and ease target, distance, pan and zoom to a preset (same frame) over
     // `duration` ms, timed by poseClock like the pose blend. Used when the 'position' step frames the room; any user
