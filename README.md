@@ -13,7 +13,7 @@ python3 -m http.server 8000
 ## Source
 
 - [index.html](index.html) and [styles.css](assets/styles.css) contain the page layout and controls.
-- [app.js](assets/app.js) contains the procedure steps (`buildSteps`), camera presets (`setOperativeView`), and WebGL renderer.
+- [app.js](assets/app.js) contains the procedure steps (`buildSteps`), camera controls, and WebGL renderer.
 - [manifest.json](data/manifest.json) contains paper references, atlas metadata, mesh provenance, the build record (`build`) and fallback study plates.
 - [loader.js](assets/loader.js) loads the manifest and six compressed anatomy chunks. It checks that the number of mesh records equals the manifest's `structure_count`.
 
@@ -75,10 +75,10 @@ python3 tools/anatomy.py pack /tmp/pterional-meshes.json
 
 ## Camera and patient positioning
 
-- **Free rotation.** The camera is a trackball with no pitch limit: drag to rotate in any direction (over the top included), Alt-drag, a two-finger twist or the Q/E keys to roll, the arrow keys to rotate, the wheel or pinch to zoom, and Shift-drag to pan. Anatomical presets (Anterior, Right, Left, Top) follow the head.
+- **Camera controls.** A normal one-finger or mouse drag tilts vertically but does not yaw the front view left/right. Hold Alt/Option and drag horizontally to turn side-to-side. Shift/right-drag pans; two-finger movement pans and zooms, two-finger twist rolls, Q/E roll, and arrow keys rotate. Wheel or pinch zooms. Anatomical presets (Anterior, Right, Left, Top) follow the head.
+- **Smooth interaction.** During pointer movement the renderer skips the picking-buffer pass and synchronous pixel readback, uses device-pixel ratio 1, and reduces one procedural texture octave. It restores full display quality and refreshes label visibility after 140 ms without movement. Picking still runs immediately on a click.
 - **Positioning.** The Position step turns the head 20° contralaterally and extends it 20° (the example in Rodríguez Rubio et al.; the amount is target-dependent) about an estimated craniocervical pivot, and later steps keep the pose. Adjust it under **Layers & View › Patient Position** (a collapsible section, opened automatically on the Position step; Anatomical/Operative toggle, rotation, extension and lateral flexion sliders, **Default 20° / 20°**). Neck, body and table tilt are not modeled.
 - **Surgeon's View** and the Position step use a room-fixed camera with a schematic Mayfield-type head holder and the head end of the table; an orientation gizmo in the corner shows the patient axes and gravity. Leaving the Position step returns the camera to the next step's head-framed view unless Surgeon's View was chosen.
-- **Operative View** follows the field orientation in Rodríguez Rubio et al., Figures 10C–D and 11, with the skull-base side at the top of the frame. The camera is aimed from atlas landmarks in the window toward the exposed field, with a separate aim for basal steps. The angles are illustrative because the paper does not provide calibrated camera poses. [Immersive Surgical Anatomy of the Pterional Approach](https://pmc.ncbi.nlm.nih.gov/articles/PMC6759424/)
 
 ## GitHub Pages
 
