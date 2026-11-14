@@ -176,7 +176,8 @@
         // At the exact pole the eye has no azimuth; retain it from the camera-right row until off the pole.
         const az = Math.hypot(h0, h1) > 1e-5 ? Math.atan2(h0, h1) : worldFrame ? Math.atan2(M[1], -M[0]) : Math.atan2(-M[2], M[0]);
         const el = Math.asin(Math.max(-1, Math.min(1, worldFrame ? eye[2] : eye[1]))), nextAz = az + dx * k, nextEl = Math.max(-1.52, Math.min(1.52, el - dy * k)), c = Math.cos(nextEl), nextEye = worldFrame ? [c * Math.sin(nextAz), c * Math.cos(nextAz), Math.sin(nextEl)] : [c * Math.sin(nextAz), Math.sin(nextEl), c * Math.cos(nextAz)]; viewQ = qLook(nextEye, up); viewChanged(); }
-    function markInteraction() { interactionActive = true; pickDirty = false; clearTimeout(interactionTimer); interactionTimer = setTimeout(() => { interactionActive = false; render(true); }, 140); }
+    function markInteraction() { interactionActive = true; pickDirty = false; clearTimeout(interactionTimer); interactionTimer = setTimeout(() => { if (pointers.size)
+        return; interactionActive = false; render(true); }, 140); }
     // Camera glide: slerp the orientation and ease target, distance, pan and zoom to a preset (same frame) over
     // `duration` ms, timed by poseClock like the pose blend. Used when the 'position' step frames the room; any user
     // camera input or preset cancels it (stopGlide). Study-plate captures ignore it.
@@ -1711,7 +1712,7 @@ if(uSelected>.5)c=mix(c,vec3(.66,1.,.62),.50);if(uIsMarker>.5)c=mix(c,uColor.rgb
     } }); }
     // Plain one-pointer dragging orbits around the head on both axes while keeping the horizon level. Alt/Option drag
     // rolls the camera about its line of sight. Shift/right-drag pans; two pointers pan, pinch and twist.
-    let pointers = new Map(), last = null, moved = 0, dragging = false, pinch = 0, hadMulti = false, pinchCenter = null, twist = null;
+    let pointers = new Map(), last = null, start = null, moved = 0, dragging = false, pinch = 0, hadMulti = false, pinchCenter = null, twist = null;
     const pairAngle = p => Math.atan2(p[1][1] - p[0][1], p[1][0] - p[0][0]), wrapAngle = a => Math.atan2(Math.sin(a), Math.cos(a));
     canvas.onpointerdown = e => { stopGlide(false); try {
         canvas.setPointerCapture(e.pointerId);
@@ -1720,6 +1721,7 @@ if(uSelected>.5)c=mix(c,vec3(.66,1.,.62),.50);if(uIsMarker>.5)c=mix(c,uColor.rgb
         hadMulti = false;
         dragging = false;
         moved = 0;
+        start = [e.clientX, e.clientY];
     } pointers.set(e.pointerId, [e.clientX, e.clientY]); if (pointers.size > 1) {
         hadMulti = true;
         dragging = true;
@@ -1733,7 +1735,7 @@ if(uSelected>.5)c=mix(c,vec3(.66,1.,.62),.50);if(uIsMarker>.5)c=mix(c,uColor.rgb
         return; if (!last) {
         last = [e.clientX, e.clientY];
         return;
-    } const dx = e.clientX - last[0], dy = e.clientY - last[1]; moved += Math.abs(dx) + Math.abs(dy); if (dx || dy)
+    } const dx = e.clientX - last[0], dy = e.clientY - last[1]; moved = start ? Math.hypot(e.clientX - start[0], e.clientY - start[1]) : moved; if (dx || dy)
         stopGlide(moved >= 5 || pointers.size > 1); pointers.set(e.pointerId, [e.clientX, e.clientY]); if (pointers.size === 1 && !dragging && moved < 5) {
         last = [e.clientX, e.clientY];
         return;
@@ -1768,14 +1770,16 @@ if(uSelected>.5)c=mix(c,vec3(.66,1.,.62),.50);if(uIsMarker>.5)c=mix(c,uColor.rgb
     else {
         markInteraction(); orbitByDrag(dx, dy);
     } last = [e.clientX, e.clientY]; render(false); };
-    canvas.onpointerup = e => { pointers.delete(e.pointerId); twist = null; if (moved < 5 && available && !hadMulti) {
+    canvas.onpointerup = e => { pointers.delete(e.pointerId); twist = null; if (!dragging && available && !hadMulti) {
         draw(true);
         cacheLabelVisibility();
         const r = canvas.getBoundingClientRect(), id = pickIdAt(e.clientX - r.left, e.clientY - r.top);
         select(id);
         render();
-    } last = null; };
-    canvas.onpointercancel = e => { pointers.delete(e.pointerId); last = null; twist = null; };
+    } last = null; if (!pointers.size && interactionActive)
+        markInteraction(); };
+    canvas.onpointercancel = e => { pointers.delete(e.pointerId); last = null; twist = null; if (!pointers.size && interactionActive)
+        markInteraction(); };
     canvas.oncontextmenu = e => e.preventDefault();
     canvas.addEventListener('wheel', e => { e.preventDefault(); stopGlide(false); markInteraction(); const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? host.clientHeight : 1); zoomBy(Math.exp(-delta * .0015), false); }, { passive: false });
     canvas.onkeydown = e => { if (e.key === 'Escape') {
