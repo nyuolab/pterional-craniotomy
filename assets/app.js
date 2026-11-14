@@ -165,8 +165,8 @@
         distance = v.distance; if (v.zoom != null)
         viewZoom = v.zoom; if (v.pan)
         pan = [...v.pan]; viewChanged(); render(); }
-    // Orbit the view around the selected target with a fixed frame-up direction. Horizontal motion changes azimuth;
-    // vertical motion changes elevation. Rebuilding the look-at quaternion prevents accumulated camera roll.
+    // Orbit the view around the selected target with a fixed frame-up direction. Move the anatomy with the pointer:
+    // dragging right moves the eye left, and dragging up moves the eye down. Rebuilding look-at prevents camera roll.
     function rotateByDrag(dx, dy, k = .008) { const len = Math.hypot(dx, dy); if (!len)
         return; viewQ = qNorm(qMul(qAxis([dy, dx, 0], len * k), viewQ)); viewChanged(); }
     function orbitByDrag(dx, dy, k = .008) { if (!dx && !dy)
@@ -175,7 +175,7 @@
         // The third column is a different vector and feeds a false direction back into every drag, causing jumps.
         // At the exact pole the eye has no azimuth; retain it from the camera-right row until off the pole.
         const az = Math.hypot(h0, h1) > 1e-5 ? Math.atan2(h0, h1) : worldFrame ? Math.atan2(M[1], -M[0]) : Math.atan2(-M[2], M[0]);
-        const el = Math.asin(Math.max(-1, Math.min(1, worldFrame ? eye[2] : eye[1]))), nextAz = az + dx * k, nextEl = Math.max(-1.52, Math.min(1.52, el - dy * k)), c = Math.cos(nextEl), nextEye = worldFrame ? [c * Math.sin(nextAz), c * Math.cos(nextAz), Math.sin(nextEl)] : [c * Math.sin(nextAz), Math.sin(nextEl), c * Math.cos(nextAz)]; viewQ = qLook(nextEye, up); viewChanged(); }
+        const el = Math.asin(Math.max(-1, Math.min(1, worldFrame ? eye[2] : eye[1]))), nextAz = az - dx * k, nextEl = Math.max(-1.52, Math.min(1.52, el + dy * k)), c = Math.cos(nextEl), nextEye = worldFrame ? [c * Math.sin(nextAz), c * Math.cos(nextAz), Math.sin(nextEl)] : [c * Math.sin(nextAz), Math.sin(nextEl), c * Math.cos(nextAz)]; viewQ = qLook(nextEye, up); viewChanged(); }
     function markInteraction() { interactionActive = true; pickDirty = false; clearTimeout(interactionTimer); interactionTimer = setTimeout(() => { if (pointers.size)
         return; interactionActive = false; render(true); }, 140); }
     // Camera glide: slerp the orientation and ease target, distance, pan and zoom to a preset (same frame) over
